@@ -18,6 +18,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Folder app, docs, dan gradle terunggah sebagai app.zip, docs.zip, gradle.zip.
+      # Langkah ini mengekstraknya menjadi folder biasa sebelum build dimulai.
+      - name: Ekstrak folder yang terunggah sebagai zip
+        run: |
+          for n in app docs gradle; do
+            if [ -f "$n.zip" ] && [ ! -d "$n" ]; then
+              rm -rf _x && mkdir _x && unzip -oq "$n.zip" -d _x
+              src=$(find _x -maxdepth 2 -type d -name "$n" | head -n1)
+              if [ -n "$src" ]; then mv "$src" "$n"; else mkdir "$n" && cp -r _x/* "$n"/; fi
+              rm -rf _x
+            fi
+          done
+          echo "=== ISI REPO ==="; ls
+          echo "=== ISI app ==="; ls app || true
+          if [ ! -f app/build.gradle ]; then
+            echo "GAGAL: app/build.gradle tidak ditemukan. Periksa isi app.zip."
+            exit 1
+          fi
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
